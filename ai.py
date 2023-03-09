@@ -1,4 +1,3 @@
-#%%
 import random
 import sqlite3
 
@@ -16,22 +15,19 @@ print("""
                                                                              |                                        | 
                                                                              |________________________________________|
  
- Ask the bot any questions to train its understanding of diffrent words.
+ Ask the bot any questions to train its understanding of different words.
  Type "bye" to quit 
  """)
 
 try:
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
- 
-    cursor.execute('SELECT key from data')
-    keywords = [row[0] for row in cursor.fetchall()]
 
-    cursor.execute('SELECT res from data')
-    responses = [row[0] for row in cursor.fetchall()]
+    cursor.execute('SELECT key, res from data')
+    data = cursor.fetchall()
 
-    # print(keywords)
-    # print(responses)
+    keywords = [row[0] for row in data]
+    responses = [row[1] for row in data]
 
 except sqlite3.Error as error:
     print("Error while working with SQLite :", error)
@@ -40,7 +36,6 @@ except sqlite3.Error as error:
 finally:
     if conn:
         cursor.close()
-        
 
 
 greetings = ["bot: Hey!", "bot: Hello!", "bot: Hi!"]
@@ -62,28 +57,26 @@ while word != "bye":
             break
 
     if not keyword_found:
-        new_response = input("bot: I haven't heard that word before, how should I respond to " + word + "? ")
+        new_response = input(
+            "bot: I haven't heard that word before, how should I respond to " + word + "? ")
         responses.append(new_response)
         keywords.append(word)
         print("bot: ait, " + new_response)
 
     word = input("You: ").lower()
-    
+
 
 try:
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
-    conn.execute('CREATE TABLE IF NOT EXISTS data (key TEXT, res TEXT)')
+    cursor.execute('DELETE FROM data')
 
-    teller = 0
-    while (teller < len(keywords)):
-        
-        conn.execute('INSERT INTO data (key,res) VALUES (?,?)',(keywords[teller],responses[teller]))  
-        teller = teller + 1   
-    
+    for i in range(len(keywords)):
+        cursor.execute('INSERT INTO data (key,res) VALUES (?,?)',
+                       (keywords[i], responses[i]))
+
     conn.commit()
-    conn.close()
 
     print(random.choice(goodbyes))
 
@@ -91,7 +84,4 @@ except sqlite3.Error as error:
     print("Error while working with SQLite :", error)
 finally:
     if conn:
-        conn.close
-    
-
-# %%
+        conn.close()
